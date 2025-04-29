@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Unitree Go2 WebRTC Playground</title>
+    <style>
+      /* Dark mode styling */
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #121620;
+        color: #fff;
+        margin: 0;
+        padding: 20px;
+      }
+      
+      /* Main layout */
+      .main-container {
+        display: flex;
+        gap: 20px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      
+      /* Video feed */
+      .video-container {
+        flex: 1;
+        background-color: #1a1f2a;
+        border-radius: 8px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+      
+      #video-frame {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      
+      /* Status Board styling */
+      .status-board {
+        background-color: #1a1f2a;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        color: #fff;
+      }
+      
+      .status-board-title {
+        font-size: 18px;
+        margin-bottom: 10px;
+        color: #ddd;
+      }
+      
+      .status-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+      }
+      
+      .status-section {
+        background-color: #242938;
+        border-radius: 8px;
+        padding: 15px;
+      }
+      
+      .status-section-title {
+        font-size: 16px;
+        margin-bottom: 10px;
+        color: #ddd;
+      }
+      
+      .status-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+      }
+      
+      .status-label {
+        color: #aaa;
+      }
+      
+      .status-value {
+        font-family: monospace;
+        font-weight: bold;
+      }
+      
+      .warning {
+        color: #ffbb33;
+      }
+      
+      .danger {
+        color: #e3514c;
+      }
+      
+      .success {
+        color: #4CAF50;
+      }
+      
+      .status-bottom {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-top: 15px;
+      }
+      
+      /* Control panels */
+      .controls-container {
+        width: 400px;
+      }
+      
+      .panel {
+        background-color: #1a1f2a;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+      }
+      
+      .panel-title {
+        font-size: 18px;
+        margin-bottom: 15px;
+      }
+      
+      /* Form elements */
+      input[type="text"] {
+        background-color: #242938;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        width: 100%;
+        border-radius: 4px;
+        margin-bottom: 10px;
+      }
+      
+      select {
+        background-color: #242938;
+        color: #fff;
+        border: none;
+        padding: 10px;
+        width: 100%;
+        border-radius: 4px;
+        margin-bottom: 10px;
+        appearance: none;
+      }
+      
+      .connect-btn {
+        background-color: #1664ff;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        float: right;
+      }
+      
+      /* Directional controls */
+      .direction-controls {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 5px;
+        margin: 20px auto;
+        width: 200px;
+      }
+      
+      .direction-btn {
+        background-color: #242938;
+        color: #fff;
+        border: none;
+        padding: 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 20px;
+      }
+      
+      .direction-btn.center {
+        background-color: #e3514c;
+      }
+      
+      /* Execute button */
+      .execute-btn {
+        background-color: #1664ff;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 10px;
+      }
+      
+      /* Terminate button */
+      .terminate-btn {
+        background-color: #e3514c;
+        color: #fff;
+        border: none;
+        padding: 15px;
+        border-radius: 4px;
+        cursor: pointer;
+        width: 100%;
+        text-align: center;
+        font-weight: bold;
+      }
+      
+      /* Additional styling to hide elements we're not showing in the new design but need for functionality */
+      .hidden {
+        display: none;
+      }
+      
+      /* Joystick containers that we'll keep but make smaller */
+      .corner-div {
+        position: fixed;
+        width: 150px;
+        height: 150px;
+        bottom: 20px;
+      }
+      
+      .bottom-left {
+        left: 20px;
+      }
+      
+      .bottom-right {
+        right: 20px;
+      }
+    </style>
+    <script src="md5.js"></script>
+    <script src="joy.min.js"></script>
+  </head>
+  <body>
+    <!-- Main container with video and controls -->
+    <div class="main-container">
+      <!-- Left side - Video feed and status board -->
+      <div class="video-container">
+        <video id="video-frame" width="640" height="480" autoplay></video>
+          <!-- Lidar Visualization Frame -->
+        <video id="lidar-frame" width="640" height="240" autoplay style="margin-top: 10px; background-color: #242938; border-radius: 8px;"></video>
+        
+        <!-- Status Board (New) -->
+        <div id="status-board" class="status-board">
+          <div class="status-board-title">Robot Status</div>
+          <div class="status-grid">
+            <!-- Robot State Section -->
+            <div class="status-section">
+              <div class="status-section-title">Robot State</div>
+              <div class="status-item">
+                <span class="status-label">Timestamp:</span>
+                <span class="status-value" id="status-timestamp">4/5/2025, 3:26:54 PM</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Error Code:</span>
+                <span class="status-value" id="status-error-code">0</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Mode:</span>
+                <span class="status-value" id="status-mode">7</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Progress:</span>
+                <span class="status-value" id="status-progress">0</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Gait Type:</span>
+                <span class="status-value" id="status-gait-type">1</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Body Height:</span>
+                <span class="status-value" id="status-body-height">0.320m</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Foot Raise Height:</span>
+                <span class="status-value" id="status-foot-raise-height">0.090m</span>
+              </div>
+            </div>
+            
+            <!-- IMU Data Section -->
+            <div class="status-section">
+              <div class="status-section-title">IMU Data</div>
+              <div class="status-item">
+                <span class="status-label">Roll:</span>
+                <span class="status-value" id="status-roll">-0.0118°</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Pitch:</span>
+                <span class="status-value" id="status-pitch">-0.0944°</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Yaw:</span>
+                <span class="status-value" id="status-yaw">0.0466°</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Quaternion:</span>
+                <span class="status-value" id="status-quaternion">[0.9986, -0.0048, -0.0473, 0.0230]</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Gyroscope:</span>
+                <span class="status-value" id="status-gyroscope">[-0.0096, -0.0149, -0.0011]</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Accelerometer:</span>
+                <span class="status-value" id="status-accelerometer">[0.8392, -0.0156, 9.4954]</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">IMU Temperature:</span>
+                <span class="status-value" id="status-imu-temp">79°C</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="status-bottom">
+            <!-- Position & Velocity Section -->
+            <div class="status-section">
+              <div class="status-section-title">Movement</div>
+              <div class="status-item">
+                <span class="status-label">Position [x, y, z]:</span>
+                <span class="status-value" id="status-position">[-0.9401, 0.9354, 0.0283]m</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Velocity [x, y, z]:</span>
+                <span class="status-value" id="status-velocity">[-0.0062, 0.0055, -0.0199]m/s</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Yaw Speed:</span>
+                <span class="status-value" id="status-yaw-speed">0.0075rad/s</span>
+              </div>
+            </div>
+            
+            <!-- Foot Force Section -->
+            <div class="status-section">
+              <div class="status-section-title">Foot Force</div>
+              <div class="status-item">
+                <span class="status-label">Front Right:</span>
+                <span class="status-value" id="status-foot-fr">12N</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Front Left:</span>
+                <span class="status-value" id="status-foot-fl">14N</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Rear Right:</span>
+                <span class="status-value" id="status-foot-rr">13N</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Rear Left:</span>
+                <span class="status-value" id="status-foot-rl">13N</span>
+              </div>
+            </div>
+            
+            <!-- Range Obstacles Section -->
+            <div class="status-section">
+              <div class="status-section-title">Range Obstacles</div>
+              <div class="status-item">
+                <span class="status-label">Front:</span>
+                <span class="status-value" id="status-range-front">2m</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Right:</span>
+                <span class="status-value" id="status-range-right">2m</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Rear:</span>
+                <span class="status-value" id="status-range-rear">2m</span>
+              </div>
+              <div class="status-item">
+                <span class="status-label">Left:</span>
+                <span class="status-value" id="status-range-left">2m</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right side - Control panels -->
+      <div class="controls-container">
+        <!-- Connection panel -->
+        <div class="panel">
+          <div class="panel-title">Connection</div>
+          <div class="form-group">
+            <label for="token">Token</label>
+            <input type="text" id="token" name="token" />
+            <label for="robot-ip">Robot IP Address</label>
+            <input type="text" id="robot-ip" name="robot-ip" value="192.168.1.100" />
+          </div>
+          <button id="connect-btn" class="connect-btn">Connect</button>
+          <div id="connection-status" style="margin-top: 10px; text-align: center; font-weight: bold; color: #e3514c;">
+            Not Connected
+          </div>
+          <div style="clear: both;"></div>
+        </div>
+        
+        <!-- Controls panel -->
+        <div class="panel">
+          <div class="panel-title">Controls</div>
+          <div class="direction-controls">
+            <div></div>
+            <button class="direction-btn" id="up-btn">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 19V5M5 12l7-7 7 7"/>
+              </svg>
+            </button>
+            <div></div>
+            <button class="direction-btn" id="left-btn">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 5l-7 7 7 7"/>
+              </svg>
+            </button>
+            <button class="direction-btn center" id="stop-btn">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="5" y="5" width="14" height="14" />
+              </svg>
+            </button>
+            <button class="direction-btn" id="right-btn">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
+            <div></div>
+            <button class="direction-btn" id="down-btn">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 5v14M5 12l7 7 7-7"/>
+              </svg>
+            </button>
+            <div></div>
+          </div>
+        </div>
+        
+        <!-- Commands panel -->
+        <div class="panel">
+          <div class="panel-title">Commands</div>
+          <div class="form-group">
+            <select id="command"></select>
+          </div>
+          <button id="execute-btn" class="execute-btn">Execute</button>
+
+          <!-- Status button -->
+          <button id="status-btn" class="execute-btn" style="margin-top: 10px; background-color: #4CAF50;">Get Robot Status</button>
+  
+          <!-- Hidden status container (we'll replace this with our new status board) -->
+          <div id="robot-status" style="display: none;"></div>
+        </div>
+
+        <!-- Add this button near the status button in the Commands panel -->
+        <button id="lidar-btn" class="execute-btn" style="margin-top: 10px; background-color: #1664ff;">Toggle Lidar View</button>
+
+        
+        <!-- Terminate Session button -->
+        <div class="terminate-btn" id="terminate-btn">Terminate Session</div>
+      </div>
+    </div>
+    
+    <!-- Hidden elements that we need to keep for functionality -->
+    <div class="hidden">
+      <select id="gamepad"></select>
+      <input type="text" id="custom-command" placeholder="Enter custom message" />
+      <button id="execute-custom-btn">Execute</button>
+      <div id="log" class="log">
+        <code class="log-code" id="log-code"></code>
+      </div>
+    </div>
+
+    
+    <!-- Joystick controls -->
+    <div id="joy-left" class="corner-div bottom-left"></div>
+    <div id="joy-right" class="corner-div bottom-right"></div>
+    
+    <script type="module" src="index.js"></script>
+    <script>
+      // Additional script for the directional buttons
+      document.addEventListener('DOMContentLoaded', function() {
+        const upBtn = document.getElementById('up-btn');
+        const downBtn = document.getElementById('down-btn');
+        const leftBtn = document.getElementById('left-btn');
+        const rightBtn = document.getElementById('right-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const terminateBtn = document.getElementById('terminate-btn');
+
+        upBtn.addEventListener('mousedown', function() {
+          if(globalThis.rtc !== undefined) {
+            globalThis.rtc.publishApi("rt/api/sport/request", 1008, JSON.stringify({x: 0.8, y: 0, z: 0}));
+          }
+        });
+        
+        // Backward movement
+        downBtn.addEventListener('mousedown', function() {
+          if(globalThis.rtc !== undefined) {
+            globalThis.rtc.publishApi("rt/api/sport/request", 1008, JSON.stringify({x: -0.4, y: 0, z: 0}));
+          }
+        });
+        
+        // Left movement
+        leftBtn.addEventListener('mousedown', function() {
+          if(globalThis.rtc !== undefined) {
+            globalThis.rtc.publishApi("rt/api/sport/request", 1008, JSON.stringify({x: 0, y: 0.4, z: 0}));
+          }
+        });
+        
+        // Right movement
+        rightBtn.addEventListener('mousedown', function() {
+          if(globalThis.rtc !== undefined) {
+            globalThis.rtc.publishApi("rt/api/sport/request", 1008, JSON.stringify({x: 0, y: -0.4, z: 0}));
+          }
+        });
+        
+        // Stop movement
+        stopBtn.addEventListener('mousedown', function() {
+          if(globalThis.rtc !== undefined) {
+            globalThis.rtc.publishApi("rt/api/sport/request", 1008, JSON.stringify({x: 0, y: 0, z: 0}));
+          }
+        });
+        
+        // Stop movement when buttons are released
+        [upBtn, downBtn, leftBtn, rightBtn].forEach(btn => {
+          btn.addEventListener('mouseup', function() {
+            if(globalThis.rtc !== undefined) {
+              globalThis.rtc.publishApi("rt/api/sport/request", 1008, JSON.stringify({x: 0, y: 0, z: 0}));
+            }
+          });
+          
+          btn.addEventListener('mouseleave', function() {
+            if(globalThis.rtc !== undefined) {
+              globalThis.rtc.publishApi("rt/api/sport/request", 1008, JSON.stringify({x: 0, y: 0, z: 0}));
+            }
+          });
+        });
+    
+        // Terminate Session button
+        terminateBtn.addEventListener('click', function() {
+          if(globalThis.rtc !== undefined) {
+            globalThis.rtc.close();
+            globalThis.rtc = undefined;
+            console.log("Session terminated");
+            // Hide status board on disconnect
+            document.getElementById('status-board').style.display = 'none';
+          }
+        });
+      });
+
+      // Add this to update the status
+      function updateConnectionStatus(status, isConnected) {
+        const statusElement = document.getElementById('connection-status');
+        statusElement.textContent = status;
+        statusElement.style.color = isConnected ? '#4CAF50' : '#e3514c';
+      }
+
+      // Update the connection handler
+      document.getElementById('connect-btn').addEventListener('click', function() {
+        updateConnectionStatus('Connecting...', false);
+        // Your existing connection code...
+        
+        // Add event listeners for connection states
+        globalThis.rtc.pc.addEventListener('connectionstatechange', function() {
+          console.log("Connection state: " + globalThis.rtc.pc.connectionState);
+          if (globalThis.rtc.pc.connectionState === 'connected') {
+            updateConnectionStatus('Connected', true);
+          } else if (globalThis.rtc.pc.connectionState === 'disconnected' || 
+                     globalThis.rtc.pc.connectionState === 'failed') {
+            updateConnectionStatus('Connection Failed', false);
+            // Hide status board on disconnect
+            document.getElementById('status-board').style.display = 'none';
+          }
+        });
+        
+        // Add data channel event listeners if not already present
+        globalThis.rtc.channel.addEventListener('open', function() {
+          console.log("Data channel is now open and ready for use");
+          updateConnectionStatus('Ready to Control', true);
+        });
+      });
+
+      // Add status button handler
+      document.addEventListener('DOMContentLoaded', function() {
+        // Initially hide the status board
+        document.getElementById('status-board').style.display = 'none';
+        
+        // Add status button handler
+        const statusBtn = document.getElementById('status-btn');
+        statusBtn.addEventListener('click', function() {
+          if(globalThis.rtc !== undefined && globalThis.rtc.channel && 
+             globalThis.rtc.channel.readyState === "open") {
+            // Use the GetState command (1034) to request robot status
+            globalThis.rtc.publishApi("rt/api/sport/request", 1034, JSON.stringify({}));
+            console.log("Requesting robot status...");
+          } else {
+            console.log("RTC data channel not ready yet");
+          }
+        });
+      });
+
+
+          // Add this to the existing script section at the bottom of index.html
+    document.getElementById('connect-btn').addEventListener('click', function() {
+      updateConnectionStatus('Connecting...', false);
+      // Your existing connection code...
+      
+      // Add event listeners for connection states
+      globalThis.rtc.pc.addEventListener('connectionstatechange', function() {
+        console.log("Connection state: " + globalThis.rtc.pc.connectionState);
+        if (globalThis.rtc.pc.connectionState === 'connected') {
+          updateConnectionStatus('Connected', true);
+          
+          // Subscribe to lidar data when connected
+          if(globalThis.rtc.channel && globalThis.rtc.channel.readyState === "open") {
+            console.log("Subscribing to lidar data");
+            globalThis.rtc.publish("rt/utlidar/voxel_map_compressed", "", DataChannelType.SUBSCRIBE);
+          }
+        } else if (globalThis.rtc.pc.connectionState === 'disconnected' || 
+                  globalThis.rtc.pc.connectionState === 'failed') {
+          updateConnectionStatus('Connection Failed', false);
+          // Hide status board on disconnect
+          document.getElementById('status-board').style.display = 'none';
+        }
+      });
+      
+      // Add data channel event listeners if not already present
+      globalThis.rtc.channel.addEventListener('open', function() {
+        console.log("Data channel is now open and ready for use");
+        updateConnectionStatus('Ready to Control', true);
+        
+        // Subscribe to lidar data when channel opens
+        console.log("Subscribing to lidar data");
+        globalThis.rtc.publish("rt/utlidar/voxel_map_compressed", "", DataChannelType.SUBSCRIBE);
+      });
+    });
+
+// Add this to your script section
+document.addEventListener('DOMContentLoaded', function() {
+  // Initially hide the lidar frame
+  document.getElementById('lidar-frame').style.display = 'none';
+  
+  // Add lidar button handler
+  const lidarBtn = document.getElementById('lidar-btn');
+  lidarBtn.addEventListener('click', function() {
+    const lidarFrame = document.getElementById('lidar-frame');
+    if(lidarFrame.style.display === 'none') {
+      lidarFrame.style.display = 'block';
+      lidarBtn.textContent = 'Hide Lidar View';
+      
+      // Subscribe to lidar data if not already
+      if(globalThis.rtc !== undefined && globalThis.rtc.channel && 
+        globalThis.rtc.channel.readyState === "open") {
+        globalThis.rtc.publish("rt/utlidar/voxel_map_compressed", "", DataChannelType.SUBSCRIBE);
+      }
+    } else {
+      lidarFrame.style.display = 'none';
+      lidarBtn.textContent = 'Show Lidar View';
+      
+      // Unsubscribe from lidar data to save bandwidth
+      if(globalThis.rtc !== undefined && globalThis.rtc.channel && 
+        globalThis.rtc.channel.readyState === "open") {
+        globalThis.rtc.publish("rt/utlidar/voxel_map_compressed", "", DataChannelType.UNSUBSCRIBE);
+      }
+    }
+  });
+});
+
+
+    </script>
+  </body>
+</html>

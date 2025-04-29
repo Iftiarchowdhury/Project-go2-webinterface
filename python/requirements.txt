@@ -1,0 +1,9 @@
+aiortc
+aiohttp
+paho-mqtt
+python-dotenv
+pygame
+wasmtime
+pycryptodome
+requests
+
