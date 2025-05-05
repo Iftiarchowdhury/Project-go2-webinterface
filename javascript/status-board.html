@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unitree Go2 Robot Dashboard</title>
+    <style>
+        /* Dark mode styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121620;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Status Board styling */
+        .status-board {
+            background-color: #1a1f2a;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px auto;
+            color: #fff;
+            max-width: 1200px;
+        }
+
+        .status-board-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .status-section {
+            background-color: #242938;
+            border-radius: 8px;
+            padding: 15px;
+        }
+
+        .status-section-title {
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: #ddd;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .status-label {
+            color: #aaa;
+        }
+
+        .status-value {
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .status-bottom {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        /* Status colors */
+        .warning {
+            color: #ffbb33;
+        }
+
+        .danger {
+            color: #e3514c;
+        }
+
+        .success {
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <div class="status-board">
+        <div class="status-board-title">Unitree Go2 Robot Dashboard</div>
+        <div class="status-grid">
+            <!-- Robot State Section -->
+            <div class="status-section">
+                <div class="status-section-title">Robot State</div>
+                <div class="status-item">
+                    <span class="status-label">Timestamp:</span>
+                    <span class="status-value" id="status-timestamp">4/30/2025, 3:10:46 AM</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Error Code:</span>
+                    <span class="status-value" id="status-error-code">1</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Mode:</span>
+                    <span class="status-value" id="status-mode">6</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Progress:</span>
+                    <span class="status-value" id="status-progress">80</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Gait Type:</span>
+                    <span class="status-value" id="status-gait-type">3</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Body Height:</span>
+                    <span class="status-value" id="status-body-height">0.333m</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Foot Raise Height:</span>
+                    <span class="status-value" id="status-foot-raise-height">0.097m</span>
+                </div>
+            </div>
+
+            <!-- IMU Data Section -->
+            <div class="status-section">
+                <div class="status-section-title">IMU Data</div>
+                <div class="status-item">
+                    <span class="status-label">Roll:</span>
+                    <span class="status-value" id="status-roll">-0.045°</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Pitch:</span>
+                    <span class="status-value" id="status-pitch">0.0557°</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Yaw:</span>
+                    <span class="status-value" id="status-yaw">-0.0036°</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Quaternion:</span>
+                    <span class="status-value" id="status-quaternion">[0.998, 0.0052, -0.0042, 0.0052]</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Gyroscope:</span>
+                    <span class="status-value" id="status-gyroscope">[-0.0036, 0.0089, 0.0026]</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Accelerometer:</span>
+                    <span class="status-value" id="status-accelerometer">[0.8413, -0.012, 9.5763]</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">IMU Temperature:</span>
+                    <span class="status-value" id="status-imu-temp">77°C</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-bottom">
+            <!-- Movement Section -->
+            <div class="status-section">
+                <div class="status-section-title">Movement</div>
+                <div class="status-item">
+                    <span class="status-label">Position [x, y, z]:</span>
+                    <span class="status-value" id="status-position">[-0.7666, 0.1041, 0.0238]m</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Velocity [x, y, z]:</span>
+                    <span class="status-value" id="status-velocity">[0.0048, -0.002, -0.0082]m/s</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Yaw Speed:</span>
+                    <span class="status-value" id="status-yaw-speed">0.0058rad/s</span>
+                </div>
+            </div>
+
+            <!-- Foot Force Section -->
+            <div class="status-section">
+                <div class="status-section-title">Foot Force</div>
+                <div class="status-item">
+                    <span class="status-label">Front Right:</span>
+                    <span class="status-value" id="status-foot-fr">12N</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Front Left:</span>
+                    <span class="status-value" id="status-foot-fl">12N</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Rear Right:</span>
+                    <span class="status-value" id="status-foot-rr">13N</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Rear Left:</span>
+                    <span class="status-value" id="status-foot-rl">11N</span>
+                </div>
+            </div>
+
+            <!-- Range Obstacles Section -->
+            <div class="status-section">
+                <div class="status-section-title">Range Obstacles</div>
+                <div class="status-item">
+                    <span class="status-label">Front:</span>
+                    <span class="status-value" id="status-range-front">2.5m</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Right:</span>
+                    <span class="status-value" id="status-range-right">1.6m</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Rear:</span>
+                    <span class="status-value" id="status-range-rear">2.3m</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Left:</span>
+                    <span class="status-value" id="status-range-left">2.5m</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Function to update status values
+        function updateStatus(data) {
+            // Update all status values based on received data
+            Object.keys(data).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.textContent = data[key];
+                }
+            });
+        }
+
+        // Example of how to receive updates (you'll need to implement your actual data reception)
+        window.addEventListener('message', function(event) {
+            if (event.data.type === 'status_update') {
+                updateStatus(event.data.status);
+            }
+        });
+    </script>
+</body>
+</html>
