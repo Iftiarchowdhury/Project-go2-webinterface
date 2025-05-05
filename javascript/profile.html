@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Unitree Go2</title>
+    <style>
+        /* Dark mode styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121620;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .profile-container {
+            max-width: 800px;
+            margin: 40px auto;
+            background-color: #1a1f2a;
+            border-radius: 8px;
+            padding: 30px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #242938;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            background-color: #242938;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 20px;
+            font-size: 40px;
+            color: #1664ff;
+        }
+
+        .profile-title {
+            flex-grow: 1;
+        }
+
+        .profile-title h1 {
+            margin: 0;
+            color: #fff;
+            font-size: 24px;
+        }
+
+        .profile-title p {
+            margin: 5px 0 0;
+            color: #aaa;
+        }
+
+        .profile-section {
+            background-color: #242938;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .profile-section h2 {
+            margin: 0 0 20px;
+            font-size: 18px;
+            color: #ddd;
+        }
+
+        .profile-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #1a1f2a;
+        }
+
+        .profile-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .profile-label {
+            color: #aaa;
+        }
+
+        .profile-value {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .profile-button {
+            background-color: #1664ff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .profile-button:hover {
+            background-color: #1255d9;
+        }
+
+        .profile-button.danger {
+            background-color: #e3514c;
+        }
+
+        .profile-button.danger:hover {
+            background-color: #c4413d;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            color: #fff;
+            text-decoration: none;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #242938;
+        }
+
+        .back-button svg {
+            margin-right: 8px;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+    <a href="index.html" class="back-button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back to Home
+    </a>
+
+    <div class="profile-container">
+        <div class="profile-header">
+            <div class="profile-avatar" id="profile-avatar">
+                <!-- Will be filled with user initials via JavaScript -->
+            </div>
+            <div class="profile-title">
+                <h1 id="profile-username">Loading...</h1>
+                <p id="profile-email">Loading...</p>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h2>Account Information</h2>
+            <div class="profile-item">
+                <span class="profile-label">Username</span>
+                <span class="profile-value" id="display-username">Loading...</span>
+            </div>
+            <div class="profile-item">
+                <span class="profile-label">Email</span>
+                <span class="profile-value" id="display-email">Loading...</span>
+            </div>
+            <div class="profile-item">
+                <span class="profile-label">Account Created</span>
+                <span class="profile-value" id="account-created">Loading...</span>
+            </div>
+            <div class="profile-item">
+                <span class="profile-label">Last Sign In</span>
+                <span class="profile-value" id="last-signin">Loading...</span>
+            </div>
+        </div>
+
+        <div class="profile-section">
+            <h2>Security</h2>
+            <div class="profile-item">
+                <span class="profile-label">Password</span>
+                <button class="profile-button" id="reset-password-btn">Reset Password</button>
+            </div>
+            <div class="profile-item">
+                <span class="profile-label">Account</span>
+                <button class="profile-button danger" id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC8ww9V2orPJ_vpfSo_rmgoXN58jJkubYI",
+            authDomain: "go2-interface.firebaseapp.com",
+            projectId: "go2-interface",
+            storageBucket: "go2-interface.firebasestorage.app",
+            messagingSenderId: "588535729633",
+            appId: "1:588535729633:web:8b0d1dad3f1250e88e16a0",
+            databaseURL: "https://go2-interface-default-rtdb.firebaseio.com"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Function to get username from email
+        function getUsernameFromEmail(email) {
+            return email.split('@')[0];
+        }
+
+        // Function to get user initials
+        function getInitials(username) {
+            return username.substring(0, 2).toUpperCase();
+        }
+
+        // Check authentication state
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in
+                const username = getUsernameFromEmail(user.email);
+                const initials = getInitials(username);
+                
+                // Update profile information
+                document.getElementById('profile-avatar').textContent = initials;
+                document.getElementById('profile-username').textContent = username;
+                document.getElementById('profile-email').textContent = user.email;
+                document.getElementById('display-username').textContent = username;
+                document.getElementById('display-email').textContent = user.email;
+                document.getElementById('account-created').textContent = new Date(user.metadata.creationTime).toLocaleString();
+                document.getElementById('last-signin').textContent = new Date(user.metadata.lastSignInTime).toLocaleString();
+            } else {
+                // No user is signed in, redirect to login page
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Reset Password Handler
+        document.getElementById('reset-password-btn').addEventListener('click', () => {
+            const user = firebase.auth().currentUser;
+            if (user) {
+                firebase.auth().sendPasswordResetEmail(user.email)
+                    .then(() => {
+                        alert('Password reset email sent! Please check your inbox.');
+                    })
+                    .catch((error) => {
+                        alert('Error sending password reset email: ' + error.message);
+                    });
+            }
+        });
+
+        // Logout Handler
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            firebase.auth().signOut()
+                .then(() => {
+                    window.location.href = 'login.html';
+                })
+                .catch((error) => {
+                    console.error('Error signing out:', error);
+                });
+        });
+    </script>
+</body>
+</html> 

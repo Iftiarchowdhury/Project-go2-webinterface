@@ -226,6 +226,92 @@
       .bottom-right {
         right: 20px;
       }
+
+      /* Hamburger Menu & Sidebar Styles */
+      .hamburger {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
+        cursor: pointer;
+        background: none;
+        border: none;
+        padding: 10px;
+      }
+
+      .hamburger span {
+        display: block;
+        width: 25px;
+        height: 3px;
+        margin: 5px 0;
+        background: #fff;
+        transition: all 0.3s ease;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: -300px;
+        width: 300px;
+        height: 100vh;
+        background-color: #1a1f2a;
+        z-index: 999;
+        transition: left 0.3s ease;
+        padding-top: 60px;
+      }
+
+      .sidebar.active {
+        left: 0;
+      }
+
+      .sidebar-menu {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .sidebar-menu li {
+        padding: 15px 25px;
+        border-bottom: 1px solid #242938;
+      }
+
+      .sidebar-menu li a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+      }
+
+      .sidebar-menu li a svg {
+        margin-right: 10px;
+      }
+
+      .sidebar-menu li:hover {
+        background-color: #242938;
+      }
+
+      /* When sidebar is open, push main content */
+      .main-container.sidebar-open {
+        margin-left: 300px;
+        transition: margin-left 0.3s ease;
+      }
+
+      /* Overlay when sidebar is open */
+      .overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 998;
+      }
+
+      .overlay.active {
+        display: block;
+      }
     </style>
     <script src="md5.js"></script>
     <script src="joy.min.js"></script>
@@ -260,6 +346,60 @@
     </script>
   </head>
   <body>
+    <!-- Hamburger Menu Button -->
+    <button class="hamburger" id="hamburger-btn">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+      <ul class="sidebar-menu">
+        <li>
+          <a href="index.html">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            Home
+          </a>
+        </li>
+        <li>
+          <a href="status-board.html">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12" y2="8"></line>
+            </svg>
+            Status
+          </a>
+        </li>
+        <li>
+          <a href="profile.html">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Profile
+          </a>
+        </li>
+        <li>
+          <a href="#" id="logout-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Logout
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
     <!-- Main container with video and controls -->
     <div class="main-container">
       <!-- Left side - Video feed and status board -->
@@ -682,6 +822,48 @@ document.addEventListener('DOMContentLoaded', function() {
         globalThis.rtc.publish("rt/utlidar/voxel_map_compressed", "", DataChannelType.UNSUBSCRIBE);
       }
     }
+  });
+});
+
+// Add this to your existing script section
+document.addEventListener('DOMContentLoaded', function() {
+  const hamburgerBtn = document.getElementById('hamburger-btn');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('overlay');
+  const mainContainer = document.querySelector('.main-container');
+  const logoutBtn = document.getElementById('logout-btn');
+
+  // Toggle sidebar
+  function toggleSidebar() {
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+    mainContainer.classList.toggle('sidebar-open');
+    
+    // Animate hamburger icon
+    hamburgerBtn.classList.toggle('active');
+  }
+
+  // Event listeners
+  hamburgerBtn.addEventListener('click', toggleSidebar);
+  overlay.addEventListener('click', toggleSidebar);
+
+  // Handle logout
+  logoutBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    firebase.auth().signOut().then(() => {
+      window.location.href = 'login.html';
+    }).catch((error) => {
+      console.error('Error signing out:', error);
+    });
+  });
+
+  // Handle menu item clicks
+  document.querySelectorAll('.sidebar-menu a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (link.id !== 'logout-btn') {
+        toggleSidebar();
+      }
+    });
   });
 });
 

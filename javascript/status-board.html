@@ -14,6 +14,92 @@
             padding: 20px;
         }
 
+        /* Hamburger Menu & Sidebar Styles */
+        .hamburger {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 10px;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            margin: 5px 0;
+            background: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 300px;
+            height: 100vh;
+            background-color: #1a1f2a;
+            z-index: 999;
+            transition: left 0.3s ease;
+            padding-top: 60px;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            padding: 15px 25px;
+            border-bottom: 1px solid #242938;
+        }
+
+        .sidebar-menu li a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar-menu li a svg {
+            margin-right: 10px;
+        }
+
+        .sidebar-menu li:hover {
+            background-color: #242938;
+        }
+
+        /* When sidebar is open, push main content */
+        .status-board.sidebar-open {
+            margin-left: 300px;
+            transition: margin-left 0.3s ease;
+        }
+
+        /* Overlay when sidebar is open */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+
         /* Status Board styling */
         .status-board {
             background-color: #1a1f2a;
@@ -22,6 +108,7 @@
             margin: 20px auto;
             color: #fff;
             max-width: 1200px;
+            transition: margin-left 0.3s ease;
         }
 
         .status-board-title {
@@ -84,8 +171,66 @@
             color: #4CAF50;
         }
     </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 </head>
 <body>
+    <!-- Hamburger Menu Button -->
+    <button class="hamburger" id="hamburger-btn">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <ul class="sidebar-menu">
+            <li>
+                <a href="index.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    Home
+                </a>
+            </li>
+            <li>
+                <a href="status-board.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12" y2="8"></line>
+                    </svg>
+                    Status
+                </a>
+            </li>
+            <li>
+                <a href="profile.html">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Profile
+                </a>
+            </li>
+            <li>
+                <a href="#" id="logout-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Logout
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Existing Status Board Content -->
     <div class="status-board">
         <div class="status-board-title">Unitree Go2 Robot Dashboard</div>
         <div class="status-grid">
@@ -219,9 +364,72 @@
     </div>
 
     <script>
-        // Function to update status values
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC8ww9V2orPJ_vpfSo_rmgoXN58jJkubYI",
+            authDomain: "go2-interface.firebaseapp.com",
+            projectId: "go2-interface",
+            storageBucket: "go2-interface.firebasestorage.app",
+            messagingSenderId: "588535729633",
+            appId: "1:588535729633:web:8b0d1dad3f1250e88e16a0",
+            databaseURL: "https://go2-interface-default-rtdb.firebaseio.com"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Check authentication state
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user) {
+                // No user is signed in, redirect to login page
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Hamburger menu functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const hamburgerBtn = document.getElementById('hamburger-btn');
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            const statusBoard = document.querySelector('.status-board');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            // Toggle sidebar
+            function toggleSidebar() {
+                sidebar.classList.toggle('active');
+                overlay.classList.toggle('active');
+                statusBoard.classList.toggle('sidebar-open');
+                
+                // Animate hamburger icon
+                hamburgerBtn.classList.toggle('active');
+            }
+
+            // Event listeners
+            hamburgerBtn.addEventListener('click', toggleSidebar);
+            overlay.addEventListener('click', toggleSidebar);
+
+            // Handle logout
+            logoutBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                firebase.auth().signOut().then(() => {
+                    window.location.href = 'login.html';
+                }).catch((error) => {
+                    console.error('Error signing out:', error);
+                });
+            });
+
+            // Handle menu item clicks
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (link.id !== 'logout-btn') {
+                        toggleSidebar();
+                    }
+                });
+            });
+        });
+
+        // Existing status update functionality
         function updateStatus(data) {
-            // Update all status values based on received data
             Object.keys(data).forEach(key => {
                 const element = document.getElementById(key);
                 if (element) {
@@ -230,7 +438,6 @@
             });
         }
 
-        // Example of how to receive updates (you'll need to implement your actual data reception)
         window.addEventListener('message', function(event) {
             if (event.data.type === 'status_update') {
                 updateStatus(event.data.status);
