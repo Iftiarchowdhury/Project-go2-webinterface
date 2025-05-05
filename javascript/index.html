@@ -229,6 +229,35 @@
     </style>
     <script src="md5.js"></script>
     <script src="joy.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC8ww9V2orPJ_vpfSo_rmgoXN58jJkubYI",
+            authDomain: "go2-interface.firebaseapp.com",
+            projectId: "go2-interface",
+            storageBucket: "go2-interface.firebasestorage.app",
+            messagingSenderId: "588535729633",
+            appId: "1:588535729633:web:8b0d1dad3f1250e88e16a0",
+            databaseURL: "https://go2-interface-default-rtdb.firebaseio.com"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Check authentication state
+        firebase.auth().onAuthStateChanged((user) => {
+            if (!user) {
+                // No user is signed in, redirect to login page
+                window.location.href = 'login.html';
+            }
+            // If user is signed in, the page will continue loading normally
+        });
+    </script>
   </head>
   <body>
     <!-- Main container with video and controls -->
@@ -443,7 +472,7 @@
         </div>
 
         <!-- Add this button near the status button in the Commands panel -->
-        <button id="lidar-btn" class="execute-btn" style="margin-top: 10px; background-color: #1664ff;">Toggle Lidar View</button>
+        <button id="lidar-btn" class="execute-btn" style="margin-top: 10px; background-color: #1664ff; display: none;">Toggle Lidar View</button>
 
         
         <!-- Terminate Session button -->

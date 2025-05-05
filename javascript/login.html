@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in - Go2 Robot Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #121620;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .login-container {
+            background-color: #1a1f2a;
+            border-radius: 8px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-icon {
+            width: 48px;
+            height: 48px;
+            background-color: #1664ff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 20px;
+        }
+
+        .login-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin: 0 0 10px;
+            color: #fff;
+        }
+
+        .subtitle {
+            color: #aaa;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            background-color: #242938;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 16px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        input::placeholder {
+            color: #aaa;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #1664ff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:hover {
+            background-color: #1258e5;
+        }
+
+        .links {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .links a {
+            color: #1664ff;
+            text-decoration: none;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        #error-message {
+            color: #e3514c;
+            margin-bottom: 15px;
+            display: none;
+        }
+    </style>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC8ww9V2orPJ_vpfSo_rmgoXN58jJkubYI",
+            authDomain: "go2-interface.firebaseapp.com",
+            projectId: "go2-interface",
+            storageBucket: "go2-interface.firebasestorage.app",
+            messagingSenderId: "588535729633",
+            appId: "1:588535729633:web:8b0d1dad3f1250e88e16a0",
+            databaseURL: "https://go2-interface-default-rtdb.firebaseio.com"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get elements
+            const signinBtn = document.getElementById('signin-btn');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const errorMessage = document.getElementById('error-message');
+            const forgotPasswordLink = document.getElementById('forgot-password');
+            const signupLink = document.getElementById('signup');
+
+            // Check if user is already signed in
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    // User is signed in, redirect to index.html
+                    window.location.href = 'index.html';
+                }
+            });
+
+            // Sign in with email/password
+            signinBtn.addEventListener('click', () => {
+                const email = emailInput.value;
+                const password = passwordInput.value;
+
+                firebase.auth().signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        // Signed in successfully
+                        window.location.href = 'index.html';
+                    })
+                    .catch((error) => {
+                        // Handle errors
+                        errorMessage.style.display = 'block';
+                        errorMessage.textContent = error.message;
+                    });
+            });
+
+            // Handle "Enter" key press
+            passwordInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    signinBtn.click();
+                }
+            });
+
+            // Forgot password handler
+            forgotPasswordLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                const email = emailInput.value;
+                if (email) {
+                    firebase.auth().sendPasswordResetEmail(email)
+                        .then(() => {
+                            errorMessage.style.display = 'block';
+                            errorMessage.style.color = '#4CAF50';
+                            errorMessage.textContent = 'Password reset email sent!';
+                        })
+                        .catch((error) => {
+                            errorMessage.style.display = 'block';
+                            errorMessage.style.color = '#e3514c';
+                            errorMessage.textContent = error.message;
+                        });
+                } else {
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = 'Please enter your email address';
+                }
+            });
+
+            // Sign up handler
+            signupLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'signup.html';
+            });
+        });
+    </script>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13 12H3" />
+            </svg>
+        </div>
+        <h1>Sign in to your account</h1>
+        <p class="subtitle">Control your robot from anywhere, anytime</p>
+
+        <div id="error-message"></div>
+
+        <div class="input-group">
+            <input type="email" id="email" placeholder="Email address" required>
+            <input type="password" id="password" placeholder="Password" required>
+        </div>
+
+        <button id="signin-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M13 12H3" />
+            </svg>
+            Sign in
+        </button>
+
+        <div class="links">
+            <a href="#" id="forgot-password">Forgot your password?</a>
+            <a href="signup.html" id="signup">Don't have an account? Sign up</a>
+        </div>
+    </div>
+
+
+</body>
+
+</html>
